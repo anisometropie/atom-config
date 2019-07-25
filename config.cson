@@ -1,0 +1,22 @@
+"*":
+  core:
+    audioBeep: false
+    customFileTypes:
+      "source.js.jsx": [
+        "js"
+      ]
+    packagesWithKeymapsDisabled: []
+    telemetryConsent: "no"
+  editor:
+    invisibles: {}
+    showIndentGuide: true
+  "exception-reporting":
+    userId: "10842c82-d268-1c8f-2980-9462d175277e"
+  "linter-ui-default":
+    showPanel: true
+  "prettier-atom":
+    formatOnSaveOptions:
+      enabled: true
+  "tree-view": {}
+  welcome:
+    showOnStartup: false

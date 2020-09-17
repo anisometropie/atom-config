@@ -1,0 +1,384 @@
+<div ng-controller="ContentController" class="fill">
+
+  <!-- CONNECTED -->
+  <div ng-if="connection == true" class="max-width fill">
+    <div class="overflow-hidden  fill max-width"
+    >
+      <!-- MENU -->
+      <header class="header">
+        <nav class="header navbar navbar-default"
+             data-ng-include="'modules/menu/views/menu.view.html'">
+        </nav>
+      </header>
+
+      <!-- DASHBOARD -->
+      <section ng-show="context == 'dashboard'"
+               class="main fill scrolling"
+               data-ng-include="'modules/core/views/contexts/dashboard.view.html'">
+      </section>
+
+      <!-- STUDY -->
+      <section ng-show="(context == 'newStudy' || context == 'editStudy') && showMap()"
+               class="main fill" style="height:100%"
+               data-ng-include="'modules/core/views/contexts/study.view.html'">
+      </section>
+
+      <section ng-show="context == 'scenario'"  class="main fill">
+          <svg id="SynopticSnapshot" class="svgSynoptic"></svg>
+          <img id="synoptic-legend" src="modules/core/img/legend.png">
+      </section>
+
+      <section ng-show="context == 'editStudy'">
+        <kibana-graph  context="context"></kibana-graph>
+      </section>
+    </div>
+
+    <!-- left side nav button / anchor -->
+    <div ng-if="isInStudyDetails() && hasScenario()" ng-show="hasScenario()" class="sidenav-anchor {{isOpenLeftSideNav() ? 'sidenav-left-anchor-close' : 'sidenav-left-anchor-open'}}" ng-click="toggleLeftSideNav()">
+      <div ng-if="isOpenLeftSideNav()" class="titleLeftSideNav">Scénarios </div>
+      <i class="icon-dashboard-card material-icons left">{{isOpenLeftSideNav() ? 'keyboard_arrow_left' : 'keyboard_arrow_right'}}</i>
+    </div>
+
+    <!-- left side nav -->
+    <md-sidenav ng-show="hasScenario()" class="md-sidenav-left md-sidenav-left-panel sidenav-comments" md-disable-backdrop md-component-id="left">
+      <md-content>
+        <div ng-repeat="scenario in study.scenarios track by $index">
+          <div class="item-study align-center max-width ng-scope {{selectedScenario && scenario.id === selectedScenario.id ? 'selectedScenario' : ''}} {{'pressure-level-is-' + scenario.pressureLevel}}" ng-click="selectScenario(scenario)">
+            <div class="action-item-study align-center ng-scope">
+                <!-- <i class="icon-dashboard-card material-icons">delete</i> -->
+                <i class="icon-dashboard-card material-icons {{hasCustomCostAndDistance(scenario) ? 'hasCustomCostAndDistance' : ''}}" ng-click="scenarioCostEditionDialog(scenario); $event.stopPropagation();">
+                  mode_edit
+                  <md-tooltip md-z-index="9999" md-direction="bottom">Éditer les coûts</md-tooltip>
+                </i>
+                <i class="icon-dashboard-card material-icons {{hasCustomHypothesis(scenario) ? 'hasCustomHypothesis' : ''}}" ng-click="hypothesisDialog(scenario); $event.stopPropagation();">
+                  notes
+                  <md-tooltip md-z-index="9999" md-direction="bottom">Éditer une hypothèse</md-tooltip>
+                </i>
+            </div>
+
+            <div class="align-center max-width ng-scope">
+              <div layout="column" class="layout-column">
+                <h4 class="ng-binding"> {{$index + 1}}. {{scenario.name}}<b></b></h4>
+                <p class="ng-binding scenario-data">{{getScenarioDataFormatted(scenario)}}
+                  <i ng-if="hasInconsistency(scenario)" ng-click="inconsistencyDialog(scenario)" class="material-icons icon-alert icon-alert-anomaly">
+                    info
+                    <md-tooltip md-z-index="9999" md-direction="bottom">Erreur de données</md-tooltip>
+                  </i>
+                  <i ng-if="hasRobinet(scenario)" class="material-icons icon-alert icon-alert-faucet">
+                    unfold_less
+                    <md-tooltip md-z-index="9999" md-direction="bottom">Robinet intersecteur</md-tooltip>
+                  </i>
+                  <i ng-if="hasWayPoint(scenario)" class="material-icons icon-alert icon-alert-waypoints">
+                    place
+                    <md-tooltip md-z-index="9999" md-direction="bottom">Itinéraire modifié</md-tooltip>
+                  </i>
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </md-content>
+    </md-sidenav>
+
+    <!-- right side nav button / anchor -->
+    <div ng-if="isInStudyDetails()" class="sidenav-anchor {{isOpenRightSideNav() ? 'sidenav-right-anchor-close' : 'sidenav-right-anchor-open'}}" ng-click="toggleRightSideNav()">
+      <i class="icon-dashboard-card material-icons right">{{isOpenRightSideNav() ? 'keyboard_arrow_right' : 'keyboard_arrow_left'}}</i>
+      <div ng-if="isOpenRightSideNav()" class="titleRightSideNav">Paramètres de l'étude</div>
+    </div>
+
+    <!-- right side nav -->
+    <md-sidenav class="md-sidenav-right md-sidenav-right-panel" md-disable-backdrop md-component-id="right">
+      <md-content ng-if="currentPanelView===panelViews.STUDY_INFO"><!--ng-controller="RightCtrl" -->
+        <div class="top-slidenav align-center max-width">
+          <h1> Paramètres / Capacité réservées </h1>
+          <span class="studyRightPanelViewIcon">
+          <i class="material-icons smaller-icon dominant-bg-icon white-color-icon"
+             ng-class="study.state === 'nouvelle' ? 'grey-color-icon' : ''"
+             ng-click="switchView(panelViews.RESERVED_CAPACITY) "
+          >
+            battery_alert
+          </i>
+          <md-tooltip md-direction="left">Visualisation récapitulative</md-tooltip>
+          </span>
+        </div>
+        <div class="information" ng-if="study.state === 'en cours'">
+            <span>
+            &#x1F6C8;
+            </span>
+          Seul les exploitations sont éditables pour une étude en cours
+        </div>
+        <form id="form-new-study">
+          <fieldset ng-disabled="isUneditableStudy()">
+
+            <!-- NOM ÉTUDE -->
+            <md-input-container>
+              <label for="studyName"> Nom de l'étude </label>
+              <input type="text" id="studyName" ng-model="study.name" ng-disabled="study.state=='en cours'"
+                     ng-change="valideCreation();"
+                     ng-keypress="unfocusOnEnter($event)"
+                     data-cy="studyNameInput"
+                     required md-autofocus>
+            </md-input-container>
+
+            <!-- CODE OMER -->
+            <md-input-container>
+              <label for="studyOmer"> Code OMER </label>
+              <input type="text" id="studyOmer" ng-model="study.numeroOmer" ng-disabled="study.state=='en cours'"
+                     ng-keypress="unfocusOnEnter($event)"
+                     data-cy="studyOmerInput">
+            </md-input-container>
+
+            <!-- DÉBIT INJECTION -->
+            <md-slider-container class="max-width hovered-input">
+              <div class="flex-column max-width no-width-param no-margin">
+                <div class="flex-row align-center max-width">
+                  <span> Débit injection</span>
+                  <md-input-container>
+                    <input flex type="number"
+                           min="0" ng-min="0"
+                           aria-label="study debit injection"
+                           aria-controls="red-slider"
+                           ng-model="study.debitInjection"
+                           ng-change="updateDebitInjection()"
+                           ng-keypress="unfocusOnEnter($event)"
+                           ng-disabled="isUneditableStudy() || study.state == 'en cours'"
+                           data-cy="studyInjectionInput"
+                           required>
+                  </md-input-container>
+                  <span> Nm<sup>3</sup> / h </span>
+                </div>
+                <div class="flex-row max-width">
+                  <md-slider aria-label="study debit injection valeur"
+                             flex min="0" max="2000"
+                             ng-model="study.debitInjection"
+                             ng-change="updateDebitInjection()"
+                             ng-keypress="unfocusOnEnter($event)"
+                             ng-disabled="isUneditableStudy() ||study.state == 'en cours'"
+                             data-cy="studyInjectionSlider"
+                             required>
+                  </md-slider>
+                </div>
+              </div>
+            </md-slider-container>
+
+            <!-- CALIBRE COMPTEUR -->
+            <md-slider-container class="max-width hovered-input">
+              <div class="flex-column max-width no-width-param no-margin">
+                <div class="flex-row align-center max-width">
+                  <span> Calibre compteur</span>
+                  <md-input-container id="select-calibre-compteur">
+                    <md-select ng-model="study.calibreCompteur" placeholder=""
+                               ng-change="updateCalibreCompteur()"
+                               ng-keypress="unfocusOnEnter($event)"
+                               required ng-disabled="isUneditableStudy() || study.state=='en cours'"
+                               aria-label="Selectionner le calibre compteur"
+                               data-cy="studyCaliberSelect">
+                      <md-option ng-value="opt" ng-repeat="opt in valeursCompteur">{{ opt }}</md-option>
+                    </md-select>
+                  </md-input-container>
+                  <span> Nm<sup>3</sup>/h </span>
+                </div>
+                <div class="flex-row max-width">
+                  <md-slider ng-disabled="isUneditableStudy() || study.state=='en cours'" flex min="0" max="2000"
+                             ng-model="study.calibreCompteur"
+                             ng-change="updateCalibreCompteur()"
+                             ng-keypress="unfocusOnEnter($event)"
+                             step="50" aria-label="study calibre compteur valeur"
+                             data-cy="studyCaliberSlider"
+                             required>
+                  </md-slider>
+                </div>
+              </div>
+            </md-slider-container>
+
+            <!-- COMMUNE (CONTAINER) -->
+            <div class="container-commune align-center">
+              <div class="flex-row bracket">
+              </div>
+
+              <div class="flex-column">
+                <div class="align-center">
+
+                  <!-- LATITUDE -->
+                  <md-input-container>
+                    <label for="studyLat">Lat.</label>
+                    <input id="studyLat"
+                           type="text"
+                           ng-model="study.lat"
+                           ng-change="searchGeo.manageCoordinatesUser()"
+                           ng-pattern="relonlat"
+                           ng-disabled="study.state == 'en cours' || isUneditableStudy()"
+                           data-cy="studyLatInput"
+                           ng-click="$event.target.select();"
+                           required>
+                  </md-input-container>
+
+                  <!-- LONGITUDE -->
+                  <md-input-container>
+                    <label for="studyLon">Lon.</label>
+                    <input id="studyLon"
+                           type="text"
+                           ng-model="study.lon"
+                           ng-change="searchGeo.manageCoordinatesUser()"
+                           ng-pattern="relonlat"
+                           ng-disabled="study.state == 'en cours' || isUneditableStudy()"
+                           data-cy="studyLonInput"
+                           ng-click="$event.target.select();"
+                           required>
+                  </md-input-container>
+
+                </div>
+
+                <div class="align-center" style="margin-top:10px">
+                  <!-- COMMUNE -->
+                  <md-autocomplete flex required
+                                   ng-disabled="study.state=='en cours'"
+                                   md-selected-item-change="searchGeo.communeChosenUser(searchGeo.communeItem)"
+                                   md-input-name="autocompleteCommune"
+                                   md-input-minlength="0"
+                                   md-input-maxlength="180"
+                                   md-no-cache="true"
+                                   md-selected-item="searchGeo.communeItem"
+                                   md-search-text="searchGeo.communeSearchText"
+                                   md-items="commune in searchGeo.communeSearch(searchGeo.communeSearchText)"
+                                   md-item-text="commune.nameToDisplay"
+                                   md-floating-label="Commune"
+                                   data-cy="studyCityAuto">
+                    <md-item-template>
+                      <span md-highlight-text="searchText">{{commune.nameToDisplay}}</span>
+                    </md-item-template>
+                  </md-autocomplete>
+                  <!-- CODE INSEE -->
+                  <md-input-container>
+                    <label for="studyCodeInsee">Code Insee</label>
+                    <input id="studyCodeInsee"
+                           type="text"
+                           ng-model="study.numeroInsee"
+                           ng-change="searchGeo.manageInseeCodeUser()"
+                           ng-disabled="study.state == 'en cours' || isUneditableStudy()"
+                           data-cy="studyInseeInput"
+                           ng-click="$event.target.select();"
+                           required>
+                  </md-input-container>
+                </div>
+              </div>
+            </div>
+
+            <!-- RAYON -->
+            <md-slider-container class="max-width max-margin hovered-input">
+              <div class="flex-column max-width no-width-param no-margin">
+                <div class="flex-row align-center max-width">
+                  <span> Rayon </span>
+                  <md-input-container>
+                    <input flex type="number" step="0.1" min="1" max="35"
+                      id="rayonInput"
+                      ng-model="rayonInput"
+                      ng-disabled="isUneditableStudy()"
+                      aria-label="study rayon" aria-controls="red-slider"
+                      ng-change="updateRadiusInput()"
+                      ng-blur="unfocusRadiusInput()"
+                      ng-keypress="unfocusOnEnter($event)"
+                      data-cy="studyRadiusInput"
+                      ng-click="$event.target.select();"
+                      required>
+                  </md-input-container>
+                  <span> km </span>
+                </div>
+                <div class="flex-row max-width">
+                  <md-slider ng-disabled="isUneditableStudy()" flex min="1" max="35" step="0.1" ng-model="study.rayon"
+                    ng-mouseup="updateRadiusElementInput()"
+                    ng-keypress="unfocusOnEnter($event)"
+                    aria-label="study rayon valeur"
+                    data-cy="studyRadiusSlider"
+                    required>
+                  </md-slider>
+                </div>
+              </div>
+            </md-slider-container>
+          </fieldset>
+
+          <fieldset>
+            <md-input-container class="max-margin">
+              <label> Commentaires </label>
+              <textarea
+                name="comment"
+                ng-disabled="(study.state === 'archivée')"
+                ng-model="study.comment"
+                md-no-autogrow="true"
+                md-maxlength="1500"
+                max-rows="4"
+                rows="4"
+                md-no-resize="true"
+                data-cy="studyCommentTextarea">
+              </textarea>
+            </md-input-container>
+
+            <div ng-if='!study.id' class="align-center flex-center max-width min-margin">
+              <md-button ng-click="createStudy()" class="md-raised md-primary" ng-disabled="disabledCreerEtude || isUneditableStudy()" data-cy="studyCreateButton">
+                Sauvegarder
+                <div class="loading" ng-if="processing.createStudy">
+                  <div class="loading-dot"></div>
+                  <div class="loading-dot"></div>
+                  <div class="loading-dot"></div>
+                </div>
+              </md-button>
+            </div>
+            <div ng-if='study.id' class="align-center flex-center max-width min-margin">
+              <md-button ng-disabled="disabledEditEtude || isUneditableStudy()" ng-click="editStudy()" class="md-raised md-primary" data-cy="studySaveButton">
+                Sauvegarder
+                <div class="loading" ng-if="processing.editStudy">
+                  <div class="loading-dot"></div>
+                  <div class="loading-dot"></div>
+                  <div class="loading-dot"></div>
+                </div>
+              </md-button>
+            </div>
+            <div class="align-center flex-center max-width min-margin">
+              <md-button
+                ng-disabled="((!study.id && study.state == 'nouvelle') || studyHasChanged || exploitationsListHasChanged) || isUneditableStudy()"
+                ng-click="generateScenarios()" class="md-raised md-primary" data-cy="studyGenerateScenarioButton">
+                Générer Scénarios
+                <div class="loading" ng-if="processing.generateScenarios">
+                  <div class="loading-dot"></div>
+                  <div class="loading-dot"></div>
+                  <div class="loading-dot"></div>
+                </div>
+              </md-button>
+              <md-button ng-if="showFailureButton" ng-click="showFailures()" class="md-fab md-warn md-mini">
+                <strong>!</strong>
+              </md-button>
+            </div>
+          </fieldset>
+        </form>
+      </md-content>
+
+      <md-content ng-if="currentPanelView===panelViews.RESERVED_CAPACITY">
+        <div class="top-slidenav align-center max-width">
+          <h1> Capacités Reservées </h1>
+          <span class="studyRightPanelViewIcon">
+          <i class="material-icons smaller-icon dominant-bg-icon white-color-icon"
+             ng-class="study.state === 'nouvelle' ? 'grey-color-icon' : ''"
+             ng-click="switchView(panelViews.STUDY_INFO)"
+          >
+            settings
+          </i>
+          <md-tooltip md-direction="left">Paramètres de l'étude</md-tooltip>
+          </span>
+        </div>
+        <div class="reserved-capacity-list">
+          Liste des capacités reservées:
+          <ul>
+            <li ng-repeat="reservedCapacity in reservedCapacities">
+              {{reservedCapacity.name}} ({{reservedCapacity.registryId}}) sur la commune {{reservedCapacity.commune}}:
+              {{reservedCapacity.reservedCapacity !== null ? reservedCapacity.reservedCapacity : 'Non définie'}}
+            </li>
+          </ul>
+        </div>
+      </md-content>
+
+    </md-sidenav>
+
+
+  </div>

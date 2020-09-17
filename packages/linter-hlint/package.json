@@ -1,0 +1,91 @@
+{
+  "_from": "https://www.atom.io/api/packages/linter-hlint/versions/2.1.0/tarball",
+  "_id": "linter-hlint@2.1.0",
+  "_inBundle": false,
+  "_integrity": "sha512-SHOZaJKJCmfdAAOWmvCJ9Xf2IvTSaNPmDAuuJKCCKcajRxUpV3UjJd2IEoZV8QDLqx5fkXyNYXSRstTOsp5YOg==",
+  "_location": "/linter-hlint",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "remote",
+    "raw": "https://www.atom.io/api/packages/linter-hlint/versions/2.1.0/tarball",
+    "rawSpec": "https://www.atom.io/api/packages/linter-hlint/versions/2.1.0/tarball",
+    "saveSpec": "https://www.atom.io/api/packages/linter-hlint/versions/2.1.0/tarball",
+    "fetchSpec": "https://www.atom.io/api/packages/linter-hlint/versions/2.1.0/tarball"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://www.atom.io/api/packages/linter-hlint/versions/2.1.0/tarball",
+  "_shasum": "34dda74eba9f1e5a788fdb73eec03f9c43dc79e6",
+  "_spec": "https://www.atom.io/api/packages/linter-hlint/versions/2.1.0/tarball",
+  "_where": "/tmp/apm-install-dir-119710-6379-1u8be36.i5r9",
+  "bugs": {
+    "url": "https://github.com/AtomLinter/linter-hlint/issues"
+  },
+  "bundleDependencies": false,
+  "configSchema": {
+    "hlintExecutablePath": {
+      "title": "The hlint executable path.",
+      "type": "string",
+      "default": "hlint"
+    },
+    "ignoreReduceDuplication": {
+      "title": "Ignore \"Reduce Duplication\" messages",
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "dependencies": {
+    "atom-linter": "^10.0.0"
+  },
+  "deprecated": false,
+  "description": "Lint Haskell code with hlint",
+  "devDependencies": {
+    "eslint": "^4.6.0",
+    "eslint-config-airbnb-base": "^12.0.0",
+    "eslint-plugin-import": "^2.7.0",
+    "jasmine-fix": "^1.3.0"
+  },
+  "engines": {
+    "atom": ">=1.4.0 <2.0.0"
+  },
+  "eslintConfig": {
+    "extends": "airbnb-base",
+    "rules": {
+      "global-require": "off"
+    },
+    "globals": {
+      "atom": true
+    },
+    "env": {
+      "node": true,
+      "browser": true
+    }
+  },
+  "homepage": "https://github.com/AtomLinter/linter-hlint#readme",
+  "keywords": [
+    "linter",
+    "hlint"
+  ],
+  "license": "MIT",
+  "main": "./lib/init.js",
+  "name": "linter-hlint",
+  "private": true,
+  "providedServices": {
+    "linter": {
+      "versions": {
+        "2.0.0": "provideLinter"
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AtomLinter/linter-hlint.git"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "apm test"
+  },
+  "version": "2.1.0"
+}

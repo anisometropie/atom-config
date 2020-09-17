@@ -6,6 +6,7 @@ import type { Point, TextEditor } from 'atom'
 import type Editors from './editors'
 import type { LinterMessage } from './types'
 
+let lastPaneItem = null
 export const severityScore = {
   error: 3,
   warning: 2,
@@ -17,12 +18,15 @@ export const severityNames = {
   warning: 'Warning',
   info: 'Info',
 }
+export const WORKSPACE_URI = 'atom://linter-ui-default'
+export const DOCK_ALLOWED_LOCATIONS = ['center', 'bottom']
+export const DOCK_DEFAULT_LOCATION = 'bottom'
 
 export function $range(message: LinterMessage): ?Object {
-  return message.version === 1 ? message.range : message.location.position
+  return message.location.position
 }
 export function $file(message: LinterMessage): ?string {
-  return message.version === 1 ? message.filePath : message.location.file
+  return message.location.file
 }
 export function copySelection() {
   const selection = getSelection()
@@ -32,6 +36,23 @@ export function copySelection() {
 }
 export function getPathOfMessage(message: LinterMessage): string {
   return atom.project.relativizePath($file(message) || '')[1]
+}
+export function getActiveTextEditor(): ?TextEditor {
+  let paneItem = atom.workspace.getCenter().getActivePaneItem()
+  const paneIsTextEditor = atom.workspace.isTextEditor(paneItem)
+  if (
+    !paneIsTextEditor &&
+    paneItem &&
+    lastPaneItem &&
+    paneItem.getURI &&
+    paneItem.getURI() === WORKSPACE_URI &&
+    (!lastPaneItem.isAlive || lastPaneItem.isAlive())
+  ) {
+    paneItem = lastPaneItem
+  } else {
+    lastPaneItem = paneItem
+  }
+  return atom.workspace.isTextEditor(paneItem) ? paneItem : null
 }
 
 export function getEditorsMap(editors: Editors): { editorsMap: Object, filePaths: Array<string> } {
@@ -53,7 +74,11 @@ export function getEditorsMap(editors: Editors): { editorsMap: Object, filePaths
   return { editorsMap, filePaths }
 }
 
-export function filterMessages(messages: Array<LinterMessage>, filePath: ?string, severity: ?string = null): Array<LinterMessage> {
+export function filterMessages(
+  messages: Array<LinterMessage>,
+  filePath: ?string,
+  severity: ?string = null,
+): Array<LinterMessage> {
   const filtered = []
   messages.forEach(function(message) {
     if ((filePath === null || $file(message) === filePath) && (!severity || message.severity === severity)) {
@@ -63,9 +88,14 @@ export function filterMessages(messages: Array<LinterMessage>, filePath: ?string
   return filtered
 }
 
-export function filterMessagesByRangeOrPoint(messages: Set<LinterMessage> | Array<LinterMessage>, filePath: string, rangeOrPoint: Point | Range): Array<LinterMessage> {
+export function filterMessagesByRangeOrPoint(
+  messages: Set<LinterMessage> | Array<LinterMessage>,
+  filePath: string,
+  rangeOrPoint: Point | Range,
+): Array<LinterMessage> {
   const filtered = []
-  const expectedRange = rangeOrPoint.constructor.name === 'Point' ? new Range(rangeOrPoint, rangeOrPoint) : Range.fromObject(rangeOrPoint)
+  const expectedRange =
+    rangeOrPoint.constructor.name === 'Point' ? new Range(rangeOrPoint, rangeOrPoint) : Range.fromObject(rangeOrPoint)
   messages.forEach(function(message) {
     const file = $file(message)
     const range = $range(message)
@@ -76,14 +106,20 @@ export function filterMessagesByRangeOrPoint(messages: Set<LinterMessage> | Arra
   return filtered
 }
 
+export function openFile(file: string, position: ?Point) {
+  const options = {}
+  options.searchAllPanes = true
+  if (position) {
+    options.initialLine = position.row
+    options.initialColumn = position.column
+  }
+  atom.workspace.open(file, options)
+}
+
 export function visitMessage(message: LinterMessage, reference: boolean = false) {
   let messageFile
   let messagePosition
   if (reference) {
-    if (message.version !== 2) {
-      console.warn('[Linter-UI-Default] Only messages v2 are allowed in jump to reference. Ignoring')
-      return
-    }
     if (!message.reference || !message.reference.file) {
       console.warn('[Linter-UI-Default] Message does not have a valid reference. Ignoring')
       return
@@ -97,43 +133,26 @@ export function visitMessage(message: LinterMessage, reference: boolean = false)
       messagePosition = messageRange.start
     }
   }
-  atom.workspace.open(messageFile, { searchAllPanes: true }).then(function() {
-    const textEditor = atom.workspace.getActiveTextEditor()
-    if (messagePosition && textEditor && textEditor.getPath() === messageFile) {
-      textEditor.setCursorBufferPosition(messagePosition)
-    }
-  })
+  if (messageFile) {
+    openFile(messageFile, messagePosition)
+  }
 }
 
-// NOTE: Code Point 160 === &nbsp;
-const replacementRegex = new RegExp(String.fromCodePoint(160), 'g')
-export function htmlToText(html: any): string {
-  const element = document.createElement('div')
-  if (typeof html === 'string') {
-    element.innerHTML = html
-  } else {
-    element.appendChild(html.cloneNode(true))
-  }
-  // NOTE: Convert &nbsp; to regular whitespace
-  return element.textContent.replace(replacementRegex, ' ')
-}
 export function openExternally(message: LinterMessage): void {
-  if (message.version === 1 && message.type.toLowerCase() === 'trace') {
-    visitMessage(message)
-    return
-  }
-
   if (message.version === 2 && message.url) {
     shell.openExternal(message.url)
   }
 }
 
-export function sortMessages(sortInfo: Array<{ column: string, type: 'asc' | 'desc' }>, rows: Array<LinterMessage>): Array<LinterMessage> {
-  const sortColumns : {
+export function sortMessages(
+  sortInfo: Array<{ column: string, type: 'asc' | 'desc' }>,
+  rows: Array<LinterMessage>,
+): Array<LinterMessage> {
+  const sortColumns: {
     severity?: 'asc' | 'desc',
     linterName?: 'asc' | 'desc',
     file?: 'asc' | 'desc',
-    line?: 'asc' | 'desc'
+    line?: 'asc' | 'desc',
   } = {}
 
   sortInfo.forEach(function(entry) {
@@ -196,18 +215,24 @@ export function sortSolutions(solutions: Array<Object>): Array<Object> {
   })
 }
 
-export function applySolution(textEditor: TextEditor, version: 1 | 2, solution: Object): boolean {
+export function applySolution(textEditor: TextEditor, solution: Object): boolean {
   if (solution.apply) {
     solution.apply()
     return true
   }
-  const range = version === 1 ? solution.range : solution.position
-  const currentText = version === 1 ? solution.oldText : solution.currentText
-  const replaceWith = version === 1 ? solution.newText : solution.replaceWith
+  const range = solution.position
+  const currentText = solution.currentText
+  const replaceWith = solution.replaceWith
   if (currentText) {
     const textInRange = textEditor.getTextInBufferRange(range)
     if (currentText !== textInRange) {
-      console.warn('[linter-ui-default] Not applying fix because text did not match the expected one', 'expected', currentText, 'but got', textInRange)
+      console.warn(
+        '[linter-ui-default] Not applying fix because text did not match the expected one',
+        'expected',
+        currentText,
+        'but got',
+        textInRange,
+      )
       return false
     }
   }

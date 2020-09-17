@@ -1,0 +1,47 @@
+{
+  "_from": "https://www.atom.io/api/packages/atom-terminal/versions/0.8.0/tarball",
+  "_id": "atom-terminal@0.8.0",
+  "_inBundle": false,
+  "_integrity": "sha512-bQ0xjt930kwZB3aU2EfmzSaR4Kw+feXLd3xbggp+mtLCwPBZ5CJ9jD7QblV/J3plwEgROYu0BJHhlcBz32hrJA==",
+  "_location": "/atom-terminal",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "remote",
+    "raw": "https://www.atom.io/api/packages/atom-terminal/versions/0.8.0/tarball",
+    "rawSpec": "https://www.atom.io/api/packages/atom-terminal/versions/0.8.0/tarball",
+    "saveSpec": "https://www.atom.io/api/packages/atom-terminal/versions/0.8.0/tarball",
+    "fetchSpec": "https://www.atom.io/api/packages/atom-terminal/versions/0.8.0/tarball"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://www.atom.io/api/packages/atom-terminal/versions/0.8.0/tarball",
+  "_shasum": "de5efec5168dcf9ab234036f3f21276bbfe4b737",
+  "_spec": "https://www.atom.io/api/packages/atom-terminal/versions/0.8.0/tarball",
+  "_where": "/tmp/apm-install-dir-120427-28222-3t6tea.94qgj",
+  "activationCommands": {
+    "atom-workspace": [
+      "atom-terminal:open-project-root"
+    ]
+  },
+  "bugs": {
+    "url": "https://github.com/karan/atom-terminal/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {},
+  "deprecated": false,
+  "description": "Open terminal in the current file's directory.",
+  "engines": {
+    "atom": ">0.50.0"
+  },
+  "homepage": "https://github.com/karan/atom-terminal#readme",
+  "license": "MIT",
+  "main": "./lib/atom-terminal",
+  "name": "atom-terminal",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/karan/atom-terminal.git"
+  },
+  "version": "0.8.0"
+}

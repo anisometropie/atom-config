@@ -35,6 +35,8 @@
 'atom-text-editor:not([mini])':
   'tab': 'emmet:expand-abbreviation-with-tab'
 'atom-workspace atom-text-editor:not([mini])':
-  'ctrl-(': 'editor:fold-at-indent-level-1'
+  'ctrl-"': 'editor:fold-at-indent-level-1'
   'ctrl-«': 'editor:fold-at-indent-level-2'
+  'ctrl-»': 'editor:fold-at-indent-level-3'
+  'ctrl-(': 'editor:fold-at-indent-level-4'
   'ctrl-)': 'editor:unfold-all'

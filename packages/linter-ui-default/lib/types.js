@@ -21,45 +21,25 @@ export type Message = {
   icon?: string,
   excerpt: string,
   severity: 'error' | 'warning' | 'info',
-  solutions?: Array<{
-    title?: string,
-    position: Range,
-    priority?: number,
-    currentText?: string,
-    replaceWith: string,
-  } | {
-    title?: string,
-    priority?: number,
-    position: Range,
-    apply: (() => any),
-  }>,
-  description?: string | (() => Promise<string> | string)
+  solutions?: Array<
+    | {
+        title?: string,
+        position: Range,
+        priority?: number,
+        currentText?: string,
+        replaceWith: string,
+      }
+    | {
+        title?: string,
+        priority?: number,
+        position: Range,
+        apply: () => any,
+      },
+  >,
+  description?: string | (() => Promise<string> | string),
 }
 
-export type MessageLegacy = {
-  // Automatically added by Linter
-  key: string,
-  version: 1,
-  linterName: string,
-
-  // From providers
-  type: string,
-  icon?: string,
-  text?: string,
-  html?: string,
-  filePath?: string,
-  range?: Range,
-  class?: string,
-  severity: 'error' | 'warning' | 'info',
-  trace?: Array<MessageLegacy>,
-  fix?: {
-    range: Range,
-    newText: string,
-    oldText?: string
-  }
-}
-
-export type LinterMessage = Message | MessageLegacy
+export type LinterMessage = Message
 
 export type Linter = {
   // Automatically added
@@ -73,13 +53,13 @@ export type Linter = {
   scope: 'file' | 'project',
   lintOnFly: boolean,
   grammarScopes: Array<string>,
-  lint: ((textEditor: TextEditor) => ?Array<Message | MessageLegacy> | Promise<?Array<Message | MessageLegacy>>),
+  lint: (textEditor: TextEditor) => ?Array<Message> | Promise<?Array<Message>>,
 }
 
 export type MessagesPatch = {
-  added: Array<Message | MessageLegacy>,
-  removed: Array<Message | MessageLegacy>,
-  messages: Array<Message | MessageLegacy>,
+  added: Array<Message>,
+  removed: Array<Message>,
+  messages: Array<Message>,
 }
 
 export type TreeViewHighlight = {

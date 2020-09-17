@@ -1,17 +1,33 @@
 "*":
+  "atom-beautify":
+    haskell:
+      beautify_on_save: true
+  "atom-haskell":
+    hasAddedConfiguration: true
   core:
     audioBeep: false
     customFileTypes:
       "source.js.jsx": [
         "js"
+        "jsx"
+        "ts"
+        "tsx"
       ]
+    disabledPackages: [
+      "language-gfm"
+    ]
     packagesWithKeymapsDisabled: []
     telemetryConsent: "no"
   editor:
+    fontSize: 15
     invisibles: {}
     showIndentGuide: true
   "exception-reporting":
     userId: "10842c82-d268-1c8f-2980-9462d175277e"
+  "haskell-ghc-mod":
+    ghcModPath: "/home/ut/.local/bin/ghc-mod"
+  "ide-haskell":
+    onSavePrettify: true
   "linter-ui-default":
     showPanel: true
   "prettier-atom":

@@ -1,10 +1,22 @@
-'use strict';
+"use strict";
 
 const _ = require('lodash/fp');
-const { executePrettierOnBufferRange, executePrettierOnEmbeddedScripts } = require('../executePrettier');
-const { getBufferRange, isCurrentScopeEmbeddedScope } = require('../editorInterface');
-const { clearLinterErrors } = require('../linterInterface');
-const { isPrettierProperVersion } = require('../helpers');
+
+const {
+  executePrettierOnBufferRange
+} = require('../executePrettier');
+
+const {
+  getBufferRange
+} = require('../editorInterface');
+
+const {
+  clearLinterErrors
+} = require('../linterInterface');
+
+const {
+  isPrettierProperVersion
+} = require('../helpers');
 
 const hasSelectedText = editor => !!editor.getSelectedText();
 
@@ -12,6 +24,6 @@ const formatSelectedBufferRanges = editor => editor.getSelectedBufferRanges().fo
 
 const executePrettierOnCurrentBufferRange = editor => executePrettierOnBufferRange(editor, getBufferRange(editor));
 
-const format = _.cond([[isPrettierProperVersion, _.flow(_.tap(clearLinterErrors), _.cond([[hasSelectedText, formatSelectedBufferRanges], [isCurrentScopeEmbeddedScope, executePrettierOnEmbeddedScripts], [_.stubTrue, executePrettierOnCurrentBufferRange]]))]]);
+const format = _.cond([[isPrettierProperVersion, _.flow(_.tap(clearLinterErrors), _.cond([[hasSelectedText, formatSelectedBufferRanges], [_.stubTrue, executePrettierOnCurrentBufferRange]]))]]);
 
 module.exports = format;

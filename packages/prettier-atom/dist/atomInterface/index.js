@@ -1,29 +1,32 @@
-'use strict';
+"use strict";
 
-var _asyncToGenerator2 = require('babel-runtime/helpers/asyncToGenerator');
+var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
 
-var _asyncToGenerator3 = _interopRequireDefault(_asyncToGenerator2);
+var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+const path = require('path');
 
-const _ = require('lodash/fp');
+const _ = require('lodash/fp'); // constants
 
-// constants
-const LINTER_LINT_COMMAND = 'linter:lint';
 
-// local helpers
+const LINTER_LINT_COMMAND = 'linter:lint'; // local helpers
+
 const getConfigOption = key => atom.config.get(`prettier-atom.${key}`);
 
 const setConfigOption = (key, value) => atom.config.set(`prettier-atom.${key}`, value);
 
-const isLinterLintCommandDefined = editor => atom.commands.findCommands({ target: atom.views.getView(editor) }).some(command => command.name === LINTER_LINT_COMMAND);
+const isLinterLintCommandDefined = editor => atom.commands.findCommands({
+  target: atom.views.getView(editor)
+}).some(command => command.name === LINTER_LINT_COMMAND); // public
 
-// public
+
 const isLinterEslintAutofixEnabled = () => atom.packages.isPackageActive('linter-eslint') && atom.config.get('linter-eslint.fixOnSave');
 
 const shouldUseEslint = () => getConfigOption('useEslint');
 
 const shouldUseStylelint = () => getConfigOption('useStylelint');
+
+const shouldUseEditorConfig = () => getConfigOption('useEditorConfig');
 
 const isFormatOnSaveEnabled = () => getConfigOption('formatOnSaveOptions.enabled');
 
@@ -32,6 +35,8 @@ const isDisabledIfNotInPackageJson = () => getConfigOption('formatOnSaveOptions.
 const isDisabledIfNoConfigFile = () => getConfigOption('formatOnSaveOptions.isDisabledIfNoConfigFile');
 
 const shouldRespectEslintignore = () => getConfigOption('formatOnSaveOptions.respectEslintignore');
+
+const shouldIgnoreNodeModules = () => getConfigOption('formatOnSaveOptions.ignoreNodeModules');
 
 const toggleFormatOnSave = () => setConfigOption('formatOnSaveOptions.enabled', !isFormatOnSaveEnabled());
 
@@ -53,24 +58,33 @@ const addWarningNotification = (message, options) => atom.notifications.addWarni
 
 const addErrorNotification = (message, options) => atom.notifications.addError(message, options);
 
-const attemptWithErrorNotification = (() => {
-  var _ref = (0, _asyncToGenerator3.default)(function* (func, ...args) {
+const attemptWithErrorNotification = /*#__PURE__*/function () {
+  var _ref = (0, _asyncToGenerator2["default"])(function* (func, ...args) {
     try {
       yield func(...args);
     } catch (e) {
       console.error(e); // eslint-disable-line no-console
-      addErrorNotification(e.message, { dismissable: true, stack: e.stack });
+
+      addErrorNotification(e.message, {
+        dismissable: true,
+        stack: e.stack
+      });
     }
   });
 
   return function attemptWithErrorNotification(_x) {
     return _ref.apply(this, arguments);
   };
-})();
+}();
 
 const runLinter = editor => isLinterLintCommandDefined(editor) && atom.commands.dispatch(atom.views.getView(editor), LINTER_LINT_COMMAND);
 
-const relativizePathFromAtomProject = path => path ? _.get('[1]', atom.project.relativizePath(path)) : null;
+const invokeAtomRelativizePath = _.flow(filePath => atom.project.relativizePath(filePath), // NOTE: fat arrow necessary for `this`
+_.get('[1]'));
+
+const relativizePathToDirname = filePath => path.relative(path.dirname(filePath), filePath);
+
+const relativizePathFromAtomProject = _.cond([[_.isNil, _.constant(null)], [_.flow(invokeAtomRelativizePath, path.isAbsolute), relativizePathToDirname], [_.stubTrue, invokeAtomRelativizePath]]);
 
 module.exports = {
   addErrorNotification,
@@ -88,9 +102,11 @@ module.exports = {
   isLinterEslintAutofixEnabled,
   relativizePathFromAtomProject,
   runLinter,
+  shouldIgnoreNodeModules,
   shouldRespectEslintignore,
   shouldUseEslint,
   shouldUseStylelint,
+  shouldUseEditorConfig,
   toggleFormatOnSave,
   attemptWithErrorNotification
 };
